@@ -43,7 +43,7 @@ const AdminLayout = () => {
   };
 
   const menuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/admin' },
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/admin/dashboard' },
     { text: 'Products', icon: <ProductsIcon />, path: '/admin/products' },
     { text: 'Orders', icon: <OrdersIcon />, path: '/admin/orders' },
     { text: 'Riders', icon: <RidersIcon />, path: '/admin/riders' },

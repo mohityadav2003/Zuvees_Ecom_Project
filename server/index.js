@@ -5,6 +5,8 @@ require('dotenv').config();
 
 const authRoutes = require('./routes/authRoutes');
 const itemRoutes = require('./routes/itemRoutes');
+const cartRoutes = require('./routes/cartRoutes');
+const orderRoutes = require('./routes/orderRoutes');
 
 const app = express();
 
@@ -22,6 +24,8 @@ const PORT = process.env.PORT || 8001;
 
 app.use('/auth', authRoutes);
 app.use('/items', itemRoutes);
+app.use('/cart', cartRoutes);
+app.use('/orders', orderRoutes);
 
 mongoose.connect(process.env.MONGO_URI).then(()=>{
     console.log('Connected to DB');

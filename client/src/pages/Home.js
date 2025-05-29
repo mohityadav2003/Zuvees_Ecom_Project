@@ -14,19 +14,31 @@ import {
   CircularProgress,
   Rating,
   IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import {
   AddShoppingCart as AddToCartIcon,
   Search as SearchIcon,
 } from '@mui/icons-material';
 import { fetchProducts } from '../store/slices/productSlice';
-import { addToCart } from '../store/slices/cartSlice';
+import { addItemToCart } from '../store/slices/cartSlice';
 
 const Home = () => {
   const dispatch = useDispatch();
-  const { products, loading, error } = useSelector((state) => state.products);
+  const {items: products, loading, error } = useSelector((state) => state.products);
   const [searchTerm, setSearchTerm] = useState('');
   const [filteredProducts, setFilteredProducts] = useState([]);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [selectedColor, setSelectedColor] = useState('');
+  const [selectedSize, setSelectedSize] = useState('');
+  const [quantity, setQuantity] = useState(1);
 
   useEffect(() => {
     dispatch(fetchProducts());
@@ -44,7 +56,31 @@ const Home = () => {
   }, [searchTerm, products]);
 
   const handleAddToCart = (product) => {
-    dispatch(addToCart({ ...product, quantity: 1 }));
+    setSelectedProduct(product);
+    setSelectedColor('');
+    setSelectedSize('');
+    setQuantity(1);
+  };
+
+  const handleConfirmAddToCart = () => {
+    if (!selectedColor || !selectedSize) {
+      alert('Please select both color and size');
+      return;
+    }
+    dispatch(addItemToCart({
+      itemId: selectedProduct._id,
+      quantity,
+      color: selectedColor,
+      size: selectedSize
+    }));
+    setSelectedProduct(null);
+  };
+
+  const handleCloseDialog = () => {
+    setSelectedProduct(null);
+    setSelectedColor('');
+    setSelectedSize('');
+    setQuantity(1);
   };
 
   if (loading) {
@@ -61,7 +97,6 @@ const Home = () => {
       </Box>
     );
   }
-
   if (error) {
     return (
       <Box sx={{ p: 3 }}>
@@ -164,12 +199,12 @@ const Home = () => {
                     <IconButton
                       color="primary"
                       onClick={() => handleAddToCart(product)}
-                      disabled={!product.countInStock}
+                      disabled={!product.stock}
                     >
                       <AddToCartIcon />
                     </IconButton>
                   </Box>
-                  {!product.countInStock && (
+                  {!product.stock && (
                     <Typography color="error" variant="body2" sx={{ mt: 1 }}>
                       Out of Stock
                     </Typography>
@@ -180,6 +215,64 @@ const Home = () => {
           ))}
         </Grid>
       </Box>
+
+      <Dialog open={!!selectedProduct} onClose={handleCloseDialog}>
+        <DialogTitle>Add to Cart</DialogTitle>
+        <DialogContent>
+          {selectedProduct && (
+            <Box sx={{ pt: 2 }}>
+              <Typography variant="h6" gutterBottom>
+                {selectedProduct.name}
+              </Typography>
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Color</InputLabel>
+                <Select
+                  value={selectedColor}
+                  onChange={(e) => setSelectedColor(e.target.value)}
+                  label="Color"
+                >
+                  {[...new Set(selectedProduct?.variations?.map(v => v.color))].map((color) => (
+                    <MenuItem key={color} value={color}>
+                      {color}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Size</InputLabel>
+                <Select
+                  value={selectedSize}
+                  onChange={(e) => setSelectedSize(e.target.value)}
+                  label="Size"
+                  disabled={!selectedColor}
+                >
+                  {[...new Set(selectedProduct?.variations
+                    ?.filter((v) => v.color === selectedColor)
+                    .map(v => v.size))].map((size) => (
+                    <MenuItem key={size} value={size}>
+                      {size}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <TextField
+                type="number"
+                label="Quantity"
+                value={quantity}
+                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                inputProps={{ min: 1 }}
+                fullWidth
+              />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDialog}>Cancel</Button>
+          <Button onClick={handleConfirmAddToCart} variant="contained">
+            Add to Cart
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };

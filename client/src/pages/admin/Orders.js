@@ -30,7 +30,7 @@ import {
   Edit as EditIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { fetchOrders, updateOrderStatus } from '../../store/slices/orderSlice';
+import { fetchOrders, updateOrderStatusAsync } from '../../store/slices/orderSlice';
 
 const Orders = () => {
   const dispatch = useDispatch();
@@ -58,8 +58,14 @@ const Orders = () => {
 
   const handleStatusChange = async () => {
     if (selectedOrder && status !== selectedOrder.status) {
-      await dispatch(updateOrderStatus({ orderId: selectedOrder._id, status }));
-      handleClose();
+      try {
+        await dispatch(updateOrderStatusAsync({ orderId: selectedOrder._id, status })).unwrap();
+        dispatch(fetchOrders());
+        handleClose();
+      } catch (err) {
+        console.error('Failed to update order status:', err);
+        handleClose();
+      }
     }
   };
 
@@ -127,7 +133,7 @@ const Orders = () => {
                   {new Date(order.createdAt).toLocaleString()}
                 </TableCell>
                 <TableCell>{order.user?.name}</TableCell>
-                <TableCell>${order.totalPrice.toFixed(2)}</TableCell>
+                <TableCell>${order.total.toFixed(2)}</TableCell>
                 <TableCell>
                   <Chip
                     label={order.status.toUpperCase()}

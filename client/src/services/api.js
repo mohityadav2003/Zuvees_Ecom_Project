@@ -11,7 +11,15 @@ const api = axios.create({
 
 // Add token to requests if it exists
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  // Try to get token from Redux state first, then localStorage
+  let token = null;
+  // Check if Redux store is available and has auth state
+  if (window.store && window.store.getState().auth.token) {
+    token = window.store.getState().auth.token;
+  } else {
+    token = localStorage.getItem('token');
+  }
+
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -30,6 +38,9 @@ export const authAPI = {
 export const productsAPI = {
   getAll: () => api.get('/items'),
   getById: (id) => api.get(`/items/${id}`),
+  create: (data) => api.post('/items/create', data),
+  update: (id, data) => api.put(`/items/${id}`, data),
+  delete: (id) => api.delete(`/items/${id}`),
 };
 
 // Cart API
@@ -37,7 +48,7 @@ export const cartAPI = {
   getCart: () => api.get('/cart'),
   addToCart: (data) => api.post('/cart/add', data),
   updateQuantity: (data) => api.put('/cart/update', data),
-  removeFromCart: (data) => api.delete('/cart/remove', data),
+  removeFromCart: ({ itemId, color, size }) => api.delete(`/cart/remove/${itemId}/${encodeURIComponent(color)}/${encodeURIComponent(size)}`),
 };
 
 // Orders API
@@ -48,6 +59,7 @@ export const ordersAPI = {
   updateOrderStatus: (data) => api.put('/orders/status', data),
   getRiderOrders: () => api.get('/orders/rider-orders'),
   updateDeliveryStatus: (data) => api.put('/orders/delivery-status', data),
+  getOrderById: (id) => api.get(`/orders/${id}`),
 };
 
 // Riders API

@@ -7,13 +7,16 @@ const authMiddleware = require('../middlewares/authMiddleware');
 // Public routes
 Router.post('/create', authMiddleware.authMiddleware, orderController.createOrder);
 Router.get('/my-orders', authMiddleware.authMiddleware, orderController.getUserOrders);
+Router.get('/rider-orders', authMiddleware.authMiddleware, orderController.getRiderOrders);
 
 // Admin routes
 Router.get('/all', authMiddleware.authMiddleware, authMiddleware.adminMiddleware, orderController.getAllOrders);
 Router.put('/status', authMiddleware.authMiddleware, authMiddleware.adminMiddleware, orderController.updateOrderStatus);
 
 // Rider routes
-Router.get('/rider-orders', authMiddleware.authMiddleware, orderController.getRiderOrders);
 Router.put('/delivery-status', authMiddleware.authMiddleware, orderController.updateDeliveryStatus);
+
+// Generic route for getting order by ID (should be last)
+Router.get('/:id', authMiddleware.authMiddleware, orderController.getOrderById);
 
 module.exports = Router; 

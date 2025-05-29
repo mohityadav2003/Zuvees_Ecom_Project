@@ -48,8 +48,8 @@ const StatCard = ({ title, value, icon, color }) => (
 
 const Dashboard = () => {
   const dispatch = useDispatch();
-  const { orders, loading: ordersLoading } = useSelector((state) => state.orders);
-  const { products, loading: productsLoading } = useSelector((state) => state.products);
+  const { orders, loading: ordersLoading } = useSelector((state) => state.orders) || [];
+  const {items : products, loading: productsLoading } = useSelector((state) => state.products) || [];
 
   useEffect(() => {
     dispatch(fetchOrders());
@@ -71,9 +71,9 @@ const Dashboard = () => {
     );
   }
 
-  const totalOrders = orders.length;
-  const totalProducts = products.length;
-  const totalRevenue = orders.reduce((sum, order) => sum + order.totalPrice, 0);
+  const totalOrders = orders && orders.length;
+  const totalProducts = products && products.length;
+  const totalRevenue = orders.reduce((sum, order) => sum + order.total, 0);
   const pendingOrders = orders.filter((order) => order.status === 'pending').length;
 
   return (
@@ -142,7 +142,7 @@ const Dashboard = () => {
                 </Box>
                 <Box>
                   <Typography variant="subtitle1">
-                    ${order.totalPrice.toFixed(2)}
+                    ${order.total.toFixed(2)}
                   </Typography>
                   <Typography
                     variant="body2"

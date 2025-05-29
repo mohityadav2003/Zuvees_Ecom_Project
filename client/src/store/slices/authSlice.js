@@ -1,6 +1,27 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { authAPI } from '../../services/api';
 
+// Restore auth state from localStorage token
+const token = localStorage.getItem('token');
+let user = null;
+let role = null;
+let isAuthenticated = false;
+
+if (token) {
+  try {
+    // Decode JWT payload
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    user = { id: payload.id, role: payload.role, email: payload.email };
+    role = payload.role;
+    isAuthenticated = true;
+  } catch (e) {
+    // Invalid token, ignore
+    user = null;
+    role = null;
+    isAuthenticated = false;
+  }
+}
+
 export const login = createAsyncThunk(
   'auth/login',
   async (credentials) => {
@@ -12,8 +33,14 @@ export const login = createAsyncThunk(
 export const adminLogin = createAsyncThunk(
   'auth/adminLogin',
   async (credentials) => {
+    console.log('adminLogin thunk called with:', credentials);
     const response = await authAPI.adminLogin(credentials);
-    return response.data;
+    console.log('adminLogin response:', response.data);
+    return {
+      token: response.data.token,
+      user: response.data.user,
+      role: response.data.user.role
+    };
   }
 );
 
@@ -26,10 +53,10 @@ export const riderLogin = createAsyncThunk(
 );
 
 const initialState = {
-  user: null,
-  token: localStorage.getItem('token'),
-  isAuthenticated: false,
-  role: null,
+  user,
+  token,
+  isAuthenticated,
+  role,
   loading: false,
   error: null,
 };
@@ -72,6 +99,7 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(login.fulfilled, (state, action) => {
+        console.log('Login fulfilled:', action.payload);
         state.loading = false;
         state.isAuthenticated = true;
         state.user = action.payload.user;
@@ -84,18 +112,21 @@ const authSlice = createSlice({
         state.error = action.error.message;
       })
       .addCase(adminLogin.pending, (state) => {
+        console.log('Admin login pending...');
         state.loading = true;
         state.error = null;
       })
       .addCase(adminLogin.fulfilled, (state, action) => {
+        console.log('Admin login fulfilled:', action.payload);
         state.loading = false;
         state.isAuthenticated = true;
         state.user = action.payload.user;
         state.token = action.payload.token;
-        state.role = 'admin';
+        state.role = action.payload.role;
         localStorage.setItem('token', action.payload.token);
       })
       .addCase(adminLogin.rejected, (state, action) => {
+        console.log('Admin login rejected:', action.error);
         state.loading = false;
         state.error = action.error.message;
       })

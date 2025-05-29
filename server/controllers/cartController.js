@@ -1,20 +1,38 @@
-const Cart = require('../models/cart');
+const User = require('../models/user');
 const Item = require('../models/item');
 
 // Get user's cart
 exports.getCart = async (req, res) => {
     try {
-        const cart = await Cart.findOne({ user: req.user._id })
-            .populate('items.item');
-        
-        if (!cart) {
-            return res.status(200).json({
-                items: [],
-                total: 0
+        const user = await User.findById(req.user._id).populate('cart.item');
+
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
             });
         }
 
-        return res.status(200).json(cart);
+        // The user's cart is directly on the user object now
+        const cartItems = user.cart || [];
+
+        // Calculate total
+        let total = 0;
+        for (const cartItem of cartItems) {
+            // Ensure item details are populated and stock exists for the selected variant
+            if (cartItem.item && cartItem.item.variations) {
+                const selectedVariant = cartItem.item.variations.find(v => 
+                    v.color === cartItem.color && v.size === cartItem.size
+                );
+                if (selectedVariant) {
+                     total += cartItem.item.price * cartItem.quantity;
+                }
+            }
+        }
+
+        return res.status(200).json({
+            items: cartItems,
+            total: total
+        });
     } catch (err) {
         console.error('Get cart error:', err);
         return res.status(500).json({
@@ -27,15 +45,15 @@ exports.getCart = async (req, res) => {
 exports.addToCart = async (req, res) => {
     try {
         const { itemId, quantity, color, size } = req.body;
+        const userId = req.user._id;
 
         // Validate input
         if (!itemId || !quantity || !color || !size) {
             return res.status(400).json({
-                message: "Please provide all required fields"
+                message: "Please provide all required fields: itemId, quantity, color, size"
             });
         }
 
-        // Check if item exists and has the selected variant
         const item = await Item.findById(itemId);
         if (!item) {
             return res.status(404).json({
@@ -43,50 +61,52 @@ exports.addToCart = async (req, res) => {
             });
         }
 
-        // Find the variant
-        const variant = item.variants.find(v => v.color === color);
-        if (!variant) {
+        // Find the selected variant in the item's variations
+        const selectedVariant = item.variations.find(v => v.color === color && v.size === size);
+        if (!selectedVariant) {
+             return res.status(400).json({
+                 message: "Selected variation (color/size) not available for this item"
+             });
+        }
+
+        // Check stock for the selected variant
+        if (selectedVariant.stock < quantity) {
             return res.status(400).json({
-                message: "Selected color not available"
+                message: `Insufficient stock for selected variation. Available: ${selectedVariant.stock}`
             });
         }
 
-        // Check if size is available
-        const sizeVariant = variant.sizes.find(s => s.size === size);
-        if (!sizeVariant || sizeVariant.stock < quantity) {
-            return res.status(400).json({
-                message: "Selected size not available or insufficient stock"
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                message: "User not found"
             });
         }
 
-        // Find or create cart
-        let cart = await Cart.findOne({ user: req.user._id });
-        if (!cart) {
-            cart = new Cart({ user: req.user._id, items: [] });
-        }
-
-        // Check if item already exists in cart
-        const existingItemIndex = cart.items.findIndex(
-            item => item.item.toString() === itemId && 
-                   item.selectedColor === color && 
-                   item.selectedSize === size
+        // Check if item with same variation already exists in cart
+        const existingItemIndex = user.cart.findIndex(
+            cartItem => cartItem.item.toString() === itemId && 
+                        cartItem.color === color && 
+                        cartItem.size === size
         );
 
         if (existingItemIndex > -1) {
-            // Update quantity if item exists
-            cart.items[existingItemIndex].quantity += quantity;
+            // Update quantity of existing item
+            user.cart[existingItemIndex].quantity += quantity;
         } else {
-            // Add new item
-            cart.items.push({
+            // Add new item with variation to cart
+            user.cart.push({
                 item: itemId,
-                quantity,
-                selectedColor: color,
-                selectedSize: size
+                quantity: quantity,
+                color: color,
+                size: size
             });
         }
 
-        await cart.save();
-        return res.status(200).json(cart);
+        await user.save();
+        // Populate the cart items before sending the response
+        await user.populate('cart.item');
+        return res.status(200).json({ items: user.cart });
     } catch (err) {
         console.error('Add to cart error:', err);
         return res.status(500).json({
@@ -99,40 +119,60 @@ exports.addToCart = async (req, res) => {
 exports.updateCartItem = async (req, res) => {
     try {
         const { itemId, quantity, color, size } = req.body;
+        const userId = req.user._id;
 
         if (!itemId || !quantity || !color || !size) {
             return res.status(400).json({
-                message: "Please provide all required fields"
+                message: "Please provide all required fields: itemId, quantity, color, size"
             });
         }
 
-        const cart = await Cart.findOne({ user: req.user._id });
-        if (!cart) {
+        const user = await User.findById(userId);
+        if (!user) {
             return res.status(404).json({
-                message: "Cart not found"
+                message: "User not found"
             });
         }
 
-        const itemIndex = cart.items.findIndex(
-            item => item.item.toString() === itemId && 
-                   item.selectedColor === color && 
-                   item.selectedSize === size
+        const itemIndex = user.cart.findIndex(
+             cartItem => cartItem.item.toString() === itemId && 
+                         cartItem.color === color && 
+                         cartItem.size === size
         );
 
         if (itemIndex === -1) {
             return res.status(404).json({
-                message: "Item not found in cart"
+                message: "Item with this variation not found in cart"
             });
         }
 
         if (quantity <= 0) {
-            cart.items.splice(itemIndex, 1);
+            // Remove item if quantity is 0 or less
+            user.cart.splice(itemIndex, 1);
         } else {
-            cart.items[itemIndex].quantity = quantity;
+            // Update quantity
+            // Optional: Check stock here against the item model if needed
+            user.cart[itemIndex].quantity = quantity;
         }
 
-        await cart.save();
-        return res.status(200).json(cart);
+        await user.save();
+        // Populate the cart items before calculating total
+        await user.populate('cart.item');
+
+        // Recalculate total after updating quantity
+        let total = 0;
+        for (const cartItem of user.cart) {
+            if (cartItem.item && cartItem.item.variations) {
+                const selectedVariant = cartItem.item.variations.find(v => 
+                    v.color === cartItem.color && v.size === cartItem.size
+                );
+                if (selectedVariant) {
+                     total += cartItem.item.price * cartItem.quantity;
+                }
+            }
+        }
+
+        return res.status(200).json({ items: user.cart, total: total });
     } catch (err) {
         console.error('Update cart error:', err);
         return res.status(500).json({
@@ -144,29 +184,39 @@ exports.updateCartItem = async (req, res) => {
 // Remove item from cart
 exports.removeFromCart = async (req, res) => {
     try {
-        const { itemId, color, size } = req.body;
+        const { itemId, color, size } = req.params; // Get from URL parameters
+        const userId = req.user._id;
 
         if (!itemId || !color || !size) {
             return res.status(400).json({
-                message: "Please provide all required fields"
+                message: "Please provide all required fields in URL parameters: itemId, color, size"
             });
         }
 
-        const cart = await Cart.findOne({ user: req.user._id });
-        if (!cart) {
+        const user = await User.findById(userId);
+        if (!user) {
             return res.status(404).json({
-                message: "Cart not found"
+                message: "User not found"
             });
         }
 
-        cart.items = cart.items.filter(
-            item => !(item.item.toString() === itemId && 
-                     item.selectedColor === color && 
-                     item.selectedSize === size)
+        // Filter out the item with the matching variation
+        const initialCartLength = user.cart.length;
+        user.cart = user.cart.filter(
+             cartItem => !(cartItem.item.toString() === itemId && 
+                           cartItem.color === color && 
+                           cartItem.size === size)
         );
 
-        await cart.save();
-        return res.status(200).json(cart);
+        if (user.cart.length === initialCartLength) {
+             // If length didn't change, item was not found
+             return res.status(404).json({ message: "Item with this variation not found in cart" });
+        }
+
+        await user.save();
+        // Populate the cart items before sending the response
+        await user.populate('cart.item');
+        return res.status(200).json({ items: user.cart });
     } catch (err) {
         console.error('Remove from cart error:', err);
         return res.status(500).json({

@@ -13,30 +13,58 @@ import {
   Paper,
   CircularProgress,
   Alert,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from '@mui/material';
 import { fetchProductById } from '../store/slices/productSlice';
-import { addToCart } from '../store/slices/cartSlice';
+import { addItemToCart } from '../store/slices/cartSlice';
 
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { selectedProduct: product, loading, error } = useSelector((state) => state.products);
+  const [selectedColor, setSelectedColor] = useState('');
+  const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [availableSizes, setAvailableSizes] = useState([]);
 
   useEffect(() => {
     dispatch(fetchProductById(id));
   }, [dispatch, id]);
 
+  useEffect(() => {
+    if (product?.variations && selectedColor) {
+      const sizes = product.variations
+        .filter(v => v.color === selectedColor)
+        .map(v => v.size);
+      setAvailableSizes(sizes);
+      if (!sizes.includes(selectedSize)) {
+        setSelectedSize('');
+      }
+    }
+  }, [product, selectedColor]);
+
   const handleQuantityChange = (e) => {
     const value = parseInt(e.target.value);
-    if (value > 0 && value <= product?.countInStock) {
+    if (value > 0 && value <= product?.stock) {
       setQuantity(value);
     }
   };
 
   const handleAddToCart = () => {
-    dispatch(addToCart({ ...product, quantity }));
+    if (!selectedColor || !selectedSize) {
+      alert('Please select color and size.');
+      return;
+    }
+    dispatch(addItemToCart({
+      itemId: product._id,
+      quantity,
+      color: selectedColor,
+      size: selectedSize
+    }));
     navigate('/cart');
   };
 
@@ -75,6 +103,10 @@ const ProductDetail = () => {
     );
   }
 
+  const selectedVariant = product.variations?.find(
+    v => v.color === selectedColor && v.size === selectedSize
+  );
+
   return (
     <Container>
       <Paper elevation={3} sx={{ p: 4, mt: 4 }}>
@@ -108,43 +140,79 @@ const ProductDetail = () => {
             <Typography variant="body1" paragraph>
               {product.description}
             </Typography>
+
             <Box sx={{ my: 3 }}>
               <Typography variant="subtitle1" gutterBottom>
                 Status:{' '}
                 <Typography
                   component="span"
-                  color={product.countInStock > 0 ? 'success.main' : 'error.main'}
+                  color={product.stock > 0 ? 'success.main' : 'error.main'}
                 >
-                  {product.countInStock > 0 ? 'In Stock' : 'Out of Stock'}
+                  {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
                 </Typography>
               </Typography>
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Color</InputLabel>
+                <Select
+                  value={selectedColor}
+                  onChange={(e) => setSelectedColor(e.target.value)}
+                  label="Color"
+                >
+                  {[...new Set(product.variations?.map(v => v.color))].map((color) => (
+                    <MenuItem key={color} value={color}>
+                      {color}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              <FormControl fullWidth sx={{ mb: 2 }}>
+                <InputLabel>Size</InputLabel>
+                <Select
+                  value={selectedSize}
+                  onChange={(e) => setSelectedSize(e.target.value)}
+                  label="Size"
+                  disabled={!selectedColor}
+                >
+                  {[...new Set(product.variations
+                    ?.filter((v) => v.color === selectedColor)
+                    .map(v => v.size))].map((size) => (
+                    <MenuItem key={size} value={size}>
+                      {size}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+
+              {product.stock > 0 && (
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                  <Typography variant="subtitle1" sx={{ mr: 2 }}>
+                    Quantity:
+                  </Typography>
+                  <TextField
+                    type="number"
+                    value={quantity}
+                    onChange={handleQuantityChange}
+                    inputProps={{
+                      min: 1,
+                      max: product.stock,
+                    }}
+                    sx={{ width: '100px' }}
+                  />
+                </Box>
+              )}
             </Box>
-            {product.countInStock > 0 && (
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <Typography variant="subtitle1" sx={{ mr: 2 }}>
-                  Quantity:
-                </Typography>
-                <TextField
-                  type="number"
-                  value={quantity}
-                  onChange={handleQuantityChange}
-                  inputProps={{
-                    min: 1,
-                    max: product.countInStock,
-                  }}
-                  sx={{ width: '100px' }}
-                />
-              </Box>
-            )}
+
             <Button
               variant="contained"
               color="primary"
               size="large"
               fullWidth
               onClick={handleAddToCart}
-              disabled={!product.countInStock}
+              disabled={product.stock <= 0 || !selectedColor || !selectedSize}
             >
-              Add to Cart
+              {product.stock > 0 ? 'Add to Cart' : 'Out of Stock'}
             </Button>
           </Grid>
         </Grid>

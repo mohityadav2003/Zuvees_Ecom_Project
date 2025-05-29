@@ -17,6 +17,6 @@ Router.post('/add', cartController.addToCart);
 Router.put('/update', cartController.updateCartItem);
 
 // Remove item from cart
-Router.delete('/remove', cartController.removeFromCart);
+Router.delete('/remove/:itemId/:color/:size', cartController.removeFromCart);
 
 module.exports = Router; 

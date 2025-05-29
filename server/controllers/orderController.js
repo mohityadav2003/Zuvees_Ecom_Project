@@ -1,45 +1,52 @@
 const Order = require('../models/order');
 const Cart = require('../models/cart');
 const Rider = require('../models/rider');
+const User = require('../models/user');
 
-// Create order from cart
+// Create order from provided items
 exports.createOrder = async (req, res) => {
     try {
-        const { customerInfo } = req.body;
+        const { orderItems, customerInfo } = req.body;
+        const userId = req.user._id;
 
-        // Get user's cart
-        const cart = await Cart.findOne({ user: req.user._id })
-            .populate('items.item');
-
-        if (!cart || cart.items.length === 0) {
+        // Validate input
+        if (!orderItems || !Array.isArray(orderItems) || orderItems.length === 0) {
             return res.status(400).json({
-                message: "Cart is empty"
+                message: "Order items are required"
             });
         }
 
-        // Create order items from cart items
-        const orderItems = cart.items.map(item => ({
-            item: item.item._id,
-            quantity: item.quantity,
-            selectedColor: item.selectedColor,
-            selectedSize: item.selectedSize,
-            price: item.item.price
-        }));
+        if (!customerInfo) {
+             return res.status(400).json({
+                 message: "Customer information is required"
+             });
+        }
+
+        // Calculate total based on provided order items
+        let total = 0;
+        for (const item of orderItems) {
+            // You might want to add validation here to ensure item.price is a number
+            if (item.price && item.quantity) {
+                 total += item.price * item.quantity;
+            }
+        }
 
         // Create new order
         const order = new Order({
-            user: req.user._id,
+            user: userId,
             items: orderItems,
-            total: cart.total,
+            total: total,
             customerInfo
         });
 
         await order.save();
 
-        // Clear the cart
-        cart.items = [];
-        cart.total = 0;
-        await cart.save();
+        // Clear the user's cart in the database
+        const user = await User.findById(userId);
+        if (user) {
+            user.cart = [];
+            await user.save();
+        }
 
         return res.status(201).json(order);
     } catch (err) {
@@ -176,6 +183,39 @@ exports.updateDeliveryStatus = async (req, res) => {
         return res.status(200).json(order);
     } catch (err) {
         console.error('Update delivery status error:', err);
+        return res.status(500).json({
+            message: "Internal server error"
+        });
+    }
+};
+
+// Get order by ID
+exports.getOrderById = async (req, res) => {
+    try {
+        console.log('Attempting to find order with ID:', req.params.id);
+        const order = await Order.findById(req.params.id)
+            .populate('items.item')
+            .populate('rider', 'name phone')
+            .populate('user', 'email');
+
+        console.log('Find order result:', order ? order._id : null);
+
+        if (!order) {
+            return res.status(404).json({
+                message: "Order not found"
+            });
+        }
+
+        // Check if the user is authorized to view this order
+        if (req.user.role === 'user' && order.user._id.toString() !== req.user._id.toString()) {
+            return res.status(403).json({
+                message: "Not authorized to view this order"
+            });
+        }
+
+        return res.status(200).json(order);
+    } catch (err) {
+        console.error('Get order by ID error:', err);
         return res.status(500).json({
             message: "Internal server error"
         });

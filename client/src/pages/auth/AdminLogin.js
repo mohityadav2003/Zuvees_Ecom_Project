@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   TextField,
   Button,
@@ -14,11 +14,19 @@ import { authAPI } from '../../services/api';
 const AdminLogin = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { isAuthenticated, role } = useSelector((state) => state.auth);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (isAuthenticated && role === 'admin') {
+      console.log('Auth state updated, navigating to dashboard...');
+      navigate('/admin/dashboard', { replace: true });
+    }
+  }, [isAuthenticated, role, navigate]);
 
   const handleChange = (e) => {
     setFormData({
@@ -30,11 +38,7 @@ const AdminLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await authAPI.adminLogin(formData);
-      if (response.data) {
-        dispatch(adminLogin(response.data));
-        navigate('/admin/dashboard');
-      }
+      dispatch(adminLogin(formData));
     } catch (err) {
       setError(err.response?.data?.message || 'Login failed');
     }

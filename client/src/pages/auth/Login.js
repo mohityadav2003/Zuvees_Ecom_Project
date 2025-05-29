@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   TextField,
   Button,
@@ -10,16 +10,24 @@ import {
   Link as MuiLink,
 } from '@mui/material';
 import { login } from '../../store/slices/authSlice';
-import { authAPI } from '../../services/api';
 
 const Login = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { isAuthenticated, role } = useSelector((state) => state.auth);
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (isAuthenticated && role === 'user') {
+      console.log('User authenticated, navigating to homepage...');
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, role, navigate]);
 
   const handleChange = (e) => {
     setFormData({
@@ -31,11 +39,11 @@ const Login = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await authAPI.login(formData);
-      dispatch(login(response.data));
-      navigate('/');
+      setError('');
+      await dispatch(login(formData)).unwrap();
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      console.error('User login failed:', err);
+      setError(err.message || 'Login failed');
     }
   };
 

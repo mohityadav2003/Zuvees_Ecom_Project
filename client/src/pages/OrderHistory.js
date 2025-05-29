@@ -109,7 +109,7 @@ const OrderHistory = () => {
                   <TableCell>
                     {new Date(order.createdAt).toLocaleString()}
                   </TableCell>
-                  <TableCell>${order.totalPrice.toFixed(2)}</TableCell>
+                  <TableCell>${order.total.toFixed(2)}</TableCell>
                   <TableCell>
                     <Chip
                       label={order.status.toUpperCase()}

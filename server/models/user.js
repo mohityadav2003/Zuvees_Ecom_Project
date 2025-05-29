@@ -22,11 +22,21 @@ const userSchema = new mongoose.Schema({
         enum: ['user', 'admin', 'rider'],
         default: 'user'
     },
-    cart:{
-        type: [mongoose.Schema.Types.ObjectId],
-        ref: 'Item',
-        default : []
-    },
+    cart: [{
+        item: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Item',
+            required: true
+        },
+        quantity: {
+            type: Number,
+            required: true,
+            default: 1,
+            min: 1
+        },
+        color: { type: String },
+        size: { type: String }
+    }],
     createdAt: {
         type: Date,
         default: Date.now

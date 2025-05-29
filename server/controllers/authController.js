@@ -41,6 +41,7 @@ exports.signup = async (req, res) => {
 
         return res.status(200).json({
             message: "User Created Successfully",
+            token: token,
             user: {
                 id: user._id,
                 name: user.name,
@@ -99,6 +100,7 @@ exports.login = async (req, res) => {
 
         return res.status(200).json({
             message: "Login successful",
+            token: token,
             user: {
                 id: user._id,
                 name: user.name,
@@ -134,7 +136,6 @@ exports.adminLogin = async (req, res) => {
             process.env.JWT_SECRET,
             { expiresIn: '1d' }
         );
-        console.log('Success')
         res.status(200).json({
             token,
             user: {

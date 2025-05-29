@@ -17,9 +17,14 @@ import { fetchOrderById } from '../store/slices/orderSlice';
 const OrderDetail = () => {
   const { id } = useParams();
   const dispatch = useDispatch();
-  const { selectedOrder: order, loading, error } = useSelector((state) => state.orders);
+  const { currentOrder: order, loading, error } = useSelector((state) => state.orders);
+
+  console.log('OrderDetail - order state:', order);
+  console.log('OrderDetail - loading state:', loading);
+  console.log('OrderDetail - error state:', error);
 
   useEffect(() => {
+    console.log('OrderDetail - useEffect dispatching fetchOrderById for ID:', id);
     dispatch(fetchOrderById(id));
   }, [dispatch, id]);
 
@@ -94,12 +99,12 @@ const OrderDetail = () => {
               Shipping Information
             </Typography>
             <Typography variant="body1">
-              {order.shippingAddress.address}
+              {order.shippingAddress?.address}
             </Typography>
             <Typography variant="body1">
-              {order.shippingAddress.city}, {order.shippingAddress.postalCode}
+              {order.shippingAddress?.city}, {order.shippingAddress?.postalCode}
             </Typography>
-            <Typography variant="body1">{order.shippingAddress.country}</Typography>
+            <Typography variant="body1">{order.shippingAddress?.country}</Typography>
           </Grid>
 
           <Grid item xs={12} md={6}>
@@ -107,7 +112,7 @@ const OrderDetail = () => {
               Payment Information
             </Typography>
             <Typography variant="body1">
-              Method: {order.paymentMethod.toUpperCase()}
+              Method: {order.paymentMethod?.toUpperCase()}
             </Typography>
             <Typography variant="body1">
               Status:{' '}
@@ -129,7 +134,7 @@ const OrderDetail = () => {
             <Typography variant="h6" gutterBottom>
               Order Items
             </Typography>
-            {order.orderItems.map((item) => (
+            {order.orderItems?.map((item) => (
               <Box
                 key={item._id}
                 sx={{
@@ -172,11 +177,11 @@ const OrderDetail = () => {
                   Order Summary
                 </Typography>
                 <Typography variant="body1">
-                  Subtotal: ${order.totalPrice.toFixed(2)}
+                  Subtotal: ${order.total?.toFixed(2)}
                 </Typography>
                 <Typography variant="body1">Shipping: Free</Typography>
                 <Typography variant="h6" color="primary" sx={{ mt: 1 }}>
-                  Total: ${order.totalPrice.toFixed(2)}
+                  Total: ${order.total?.toFixed(2)}
                 </Typography>
               </Box>
             </Box>

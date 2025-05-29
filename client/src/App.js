@@ -19,6 +19,7 @@ import AdminLogin from './pages/auth/AdminLogin';
 import RiderLogin from './pages/auth/RiderLogin';
 import OrderHistory from './pages/OrderHistory';
 import UserProfile from './pages/UserProfile';
+import OrderDetail from './pages/OrderDetail';
 
 // Admin Pages
 import AdminDashboard from './pages/admin/Dashboard';
@@ -74,6 +75,7 @@ const App = () => {
           >
             <Route path="/cart" element={<Cart />} />
             <Route path="/orders" element={<OrderHistory />} />
+            <Route path="/orders/:id" element={<OrderDetail />} />
             <Route path="/profile" element={<UserProfile />} />
           </Route>
 
