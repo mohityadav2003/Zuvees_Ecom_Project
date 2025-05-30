@@ -9,7 +9,6 @@ import {
   Button,
   CircularProgress,
   Alert,
-  Chip,
 } from '@mui/material';
 import { fetchRiderOrders } from '../../store/slices/orderSlice';
 import { ridersAPI } from '../../services/api';
@@ -30,19 +29,6 @@ const RiderDashboard = () => {
       setStatus(newStatus);
     } catch (err) {
       console.error('Failed to update status:', err);
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'available':
-        return 'success';
-      case 'busy':
-        return 'warning';
-      case 'offline':
-        return 'error';
-      default:
-        return 'default';
     }
   };
 
@@ -133,7 +119,7 @@ const RiderDashboard = () => {
                     Order #{order._id}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {order.customerInfo.address}
+                    Address: {order.customerInfo.address?.street}, {order.customerInfo.address?.city}, {order.customerInfo.address?.country}
                   </Typography>
                 </Box>
               ))}

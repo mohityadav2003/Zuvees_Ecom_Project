@@ -21,7 +21,6 @@ import {
   DialogActions,
 } from '@mui/material';
 import { fetchRiderOrders, updateDeliveryStatus } from '../../store/slices/orderSlice';
-import { ordersAPI } from '../../services/api';
 
 const RiderOrders = () => {
   const dispatch = useDispatch();
@@ -117,7 +116,7 @@ const RiderOrders = () => {
                   {new Date(order.createdAt).toLocaleString()}
                 </TableCell>
                 <TableCell>{order.customerInfo.name}</TableCell>
-                <TableCell>{order.customerInfo.address}</TableCell>
+                <TableCell>{`${order.customerInfo.address?.street}, ${order.customerInfo.address?.city}, ${order.customerInfo.address?.country}`}</TableCell>
                 <TableCell>
                   <Chip
                     label={order.status.toUpperCase()}
@@ -153,7 +152,7 @@ const RiderOrders = () => {
             Customer: {selectedOrder?.customerInfo.name}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Address: {selectedOrder?.customerInfo.address}
+            Address: {`${selectedOrder?.customerInfo.address?.street}, ${selectedOrder?.customerInfo.address?.city}, ${selectedOrder?.customerInfo.address?.country}`}
           </Typography>
         </DialogContent>
         <DialogActions>

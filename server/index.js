@@ -7,6 +7,7 @@ const authRoutes = require('./routes/authRoutes');
 const itemRoutes = require('./routes/itemRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
+const riderRoutes = require('./routes/riderRoutes');
 
 const app = express();
 
@@ -26,13 +27,18 @@ app.use('/auth', authRoutes);
 app.use('/items', itemRoutes);
 app.use('/cart', cartRoutes);
 app.use('/orders', orderRoutes);
+app.use('/rider', riderRoutes);
 
-mongoose.connect(process.env.MONGO_URI).then(()=>{
+mongoose
+  .connect(process.env.MONGO_URI)
+  .then(() => {
     console.log('Connected to DB');
-    app.listen(PORT, ()=>{
-        console.log(`Server Started at port ${PORT}`);
-    })
-}).catch((err)=>{
+    app.listen(PORT, () => {
+      console.log(`Server Started at port ${PORT}`);
+    });
+  })
+  .catch((err) => {
     console.log('Error in DB Connection');
-})
+    console.error(err);
+  });
 

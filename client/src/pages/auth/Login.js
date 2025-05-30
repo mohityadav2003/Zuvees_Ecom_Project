@@ -24,7 +24,6 @@ const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated && role === 'user') {
-      console.log('User authenticated, navigating to homepage...');
       navigate('/', { replace: true });
     }
   }, [isAuthenticated, role, navigate]);

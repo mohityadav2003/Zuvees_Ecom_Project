@@ -21,7 +21,7 @@ import {
   LocalShipping as OrdersIcon,
   ExitToApp as LogoutIcon,
 } from '@mui/icons-material';
-import { logout } from '../store/slices/authSlice';
+import { clearAuth } from '../store/slices/authSlice';
 
 const drawerWidth = 240;
 
@@ -36,12 +36,12 @@ const RiderLayout = () => {
   };
 
   const handleLogout = () => {
-    dispatch(logout());
+    dispatch(clearAuth());
     navigate('/login');
   };
 
   const menuItems = [
-    { text: 'Dashboard', icon: <DashboardIcon />, path: '/rider' },
+    { text: 'Dashboard', icon: <DashboardIcon />, path: '/rider/dashboard' },
     { text: 'My Orders', icon: <OrdersIcon />, path: '/rider/orders' },
   ];
 
@@ -144,6 +144,7 @@ const RiderLayout = () => {
           flexGrow: 1,
           p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
+          mt: 8,
         }}
       >
         <Toolbar />

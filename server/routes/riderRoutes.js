@@ -14,5 +14,6 @@ Router.put('/location', authMiddleware.authMiddleware, riderController.updateLoc
 // Admin routes
 Router.post('/create', authMiddleware.authMiddleware, authMiddleware.adminMiddleware, riderController.createRider);
 Router.get('/all', authMiddleware.authMiddleware, authMiddleware.adminMiddleware, riderController.getAllRiders);
+Router.put('/:id', authMiddleware.authMiddleware, authMiddleware.adminMiddleware, riderController.updateRider);
 
 module.exports = Router; 

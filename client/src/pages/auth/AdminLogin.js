@@ -9,7 +9,6 @@ import {
   Alert,
 } from '@mui/material';
 import { adminLogin } from '../../store/slices/authSlice';
-import { authAPI } from '../../services/api';
 
 const AdminLogin = () => {
   const navigate = useNavigate();
@@ -23,7 +22,6 @@ const AdminLogin = () => {
 
   useEffect(() => {
     if (isAuthenticated && role === 'admin') {
-      console.log('Auth state updated, navigating to dashboard...');
       navigate('/admin/dashboard', { replace: true });
     }
   }, [isAuthenticated, role, navigate]);

@@ -24,7 +24,6 @@ const OrderDetail = () => {
   console.log('OrderDetail - error state:', error);
 
   useEffect(() => {
-    console.log('OrderDetail - useEffect dispatching fetchOrderById for ID:', id);
     dispatch(fetchOrderById(id));
   }, [dispatch, id]);
 

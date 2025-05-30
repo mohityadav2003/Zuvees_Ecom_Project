@@ -9,7 +9,6 @@ import {
   Alert,
 } from '@mui/material';
 import { riderLogin } from '../../store/slices/authSlice';
-import { authAPI } from '../../services/api';
 
 const RiderLogin = () => {
   const navigate = useNavigate();
@@ -30,11 +29,13 @@ const RiderLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await authAPI.riderLogin(formData);
-      dispatch(riderLogin(response.data));
-      navigate('/rider');
+      console.log('Attempting rider login with:', formData);
+      const result = await dispatch(riderLogin(formData)).unwrap();
+      console.log('Rider login successful:', result);
+      navigate('/rider/dashboard');
     } catch (err) {
-      setError(err.response?.data?.message || 'Login failed');
+      console.error('Rider login error:', err);
+      setError(err.message || 'Login failed');
     }
   };
 

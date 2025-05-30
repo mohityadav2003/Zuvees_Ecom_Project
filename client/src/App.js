@@ -52,7 +52,7 @@ const App = () => {
           {/* Public Routes */}
           <Route element={<MainLayout />}>
             <Route path="/" element={<Home />} />
-            <Route path="/products/:id" element={<ProductDetail />} />
+            <Route path="/product/:id" element={<ProductDetail />} />
           </Route>
 
           {/* Auth Routes */}
@@ -85,7 +85,7 @@ const App = () => {
               isAuthenticated && role === 'admin' ? (
                 <AdminLayout />
               ) : (
-                <Navigate to="/admin/login" replace />
+                <Navigate to="/" replace />
               )
             }
           >

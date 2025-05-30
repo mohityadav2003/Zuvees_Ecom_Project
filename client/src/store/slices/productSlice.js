@@ -48,6 +48,7 @@ const productSlice = createSlice({
     currentProduct: null,
     loading: false,
     error: null,
+    searchTerm: '',
   },
   reducers: {
     setProducts: (state, action) => {
@@ -61,6 +62,9 @@ const productSlice = createSlice({
     },
     setError: (state, action) => {
       state.error = action.payload;
+    },
+    setSearchTerm: (state, action) => {
+      state.searchTerm = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -107,10 +111,9 @@ const productSlice = createSlice({
       })
       .addCase(updateProduct.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.items.findIndex(p => p._id === action.payload._id);
-        if (index !== -1) {
-          state.items[index] = action.payload;
-        }
+        state.items = state.items.map(item =>
+          item._id === action.payload._id ? action.payload : item
+        );
         if (state.currentProduct?._id === action.payload._id) {
           state.currentProduct = action.payload;
         }
@@ -142,6 +145,7 @@ export const {
   setCurrentProduct,
   setLoading,
   setError,
+  setSearchTerm,
 } = productSlice.actions;
 
 export default productSlice.reducer; 

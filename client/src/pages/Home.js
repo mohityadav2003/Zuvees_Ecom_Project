@@ -25,15 +25,13 @@ import {
 } from '@mui/material';
 import {
   AddShoppingCart as AddToCartIcon,
-  Search as SearchIcon,
 } from '@mui/icons-material';
 import { fetchProducts } from '../store/slices/productSlice';
 import { addItemToCart } from '../store/slices/cartSlice';
 
 const Home = () => {
   const dispatch = useDispatch();
-  const {items: products, loading, error } = useSelector((state) => state.products);
-  const [searchTerm, setSearchTerm] = useState('');
+  const {items: products, loading, error, searchTerm } = useSelector((state) => state.products);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [selectedColor, setSelectedColor] = useState('');
@@ -110,27 +108,6 @@ const Home = () => {
   return (
     <Container>
       <Box sx={{ my: 4 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            mb: 4,
-            maxWidth: 600,
-            mx: 'auto',
-          }}
-        >
-          <TextField
-            fullWidth
-            variant="outlined"
-            placeholder="Search products..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            InputProps={{
-              startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
-            }}
-          />
-        </Box>
-
         <Grid container spacing={4}>
           {filteredProducts.map((product) => (
             <Grid item key={product._id} xs={12} sm={6} md={4} lg={3}>
@@ -154,7 +131,7 @@ const Home = () => {
                     height="200"
                     image={product.image}
                     alt={product.name}
-                    sx={{ objectFit: 'cover' }}
+                    sx={{ objectFit: 'cover', width: '100%', maxHeight: 200 }}
                   />
                 </Link>
                 <CardContent sx={{ flexGrow: 1 }}>

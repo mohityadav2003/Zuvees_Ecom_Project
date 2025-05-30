@@ -46,9 +46,16 @@ export const adminLogin = createAsyncThunk(
 
 export const riderLogin = createAsyncThunk(
   'auth/riderLogin',
-  async (credentials) => {
-    const response = await authAPI.riderLogin(credentials);
-    return response.data;
+  async (credentials, { rejectWithValue }) => {
+    try {
+      console.log('Making rider login API call with:', credentials);
+      const response = await authAPI.riderLogin(credentials);
+      console.log('Rider login API response:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Rider login API error:', error.response?.data || error.message);
+      return rejectWithValue(error.response?.data?.message || 'Login failed');
+    }
   }
 );
 
@@ -81,7 +88,7 @@ const authSlice = createSlice({
       state.loading = false;
       state.error = action.payload;
     },
-    logout: (state) => {
+    clearAuth: (state) => {
       state.user = null;
       state.token = null;
       state.isAuthenticated = false;
@@ -117,7 +124,6 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(adminLogin.fulfilled, (state, action) => {
-        console.log('Admin login fulfilled:', action.payload);
         state.loading = false;
         state.isAuthenticated = true;
         state.user = action.payload.user;
@@ -143,8 +149,9 @@ const authSlice = createSlice({
         localStorage.setItem('token', action.payload.token);
       })
       .addCase(riderLogin.rejected, (state, action) => {
+        console.error('Rider login rejected:', action.payload);
         state.loading = false;
-        state.error = action.error.message;
+        state.error = action.payload;
       });
   },
 });
@@ -153,7 +160,7 @@ export const {
   loginStart,
   loginSuccess,
   loginFailure,
-  logout,
+  clearAuth,
   updateUser,
 } = authSlice.actions;
 

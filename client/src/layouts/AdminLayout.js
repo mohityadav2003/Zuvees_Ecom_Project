@@ -23,7 +23,7 @@ import {
   DirectionsBike as RidersIcon,
   ExitToApp as LogoutIcon,
 } from '@mui/icons-material';
-import { logout } from '../store/slices/authSlice';
+import { clearAuth } from '../store/slices/authSlice';
 
 const drawerWidth = 240;
 
@@ -38,8 +38,8 @@ const AdminLayout = () => {
   };
 
   const handleLogout = () => {
-    dispatch(logout());
-    navigate('/login');
+    dispatch(clearAuth());
+    navigate('/', { replace: true });
   };
 
   const menuItems = [
@@ -148,6 +148,7 @@ const AdminLayout = () => {
           flexGrow: 1,
           p: 3,
           width: { sm: `calc(100% - ${drawerWidth}px)` },
+          mt: 8,
         }}
       >
         <Toolbar />

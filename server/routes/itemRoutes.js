@@ -9,5 +9,6 @@ router.get('/:id', itemController.getById);
 
 // Create item route (admin only)
 router.post('/create', authenticateToken.authenticate, itemController.createItem);
+router.put('/:id', authenticateToken.authenticate, authenticateToken.adminMiddleware, itemController.updateItem);
 
 module.exports = router;

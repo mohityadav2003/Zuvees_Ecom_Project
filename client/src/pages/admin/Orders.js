@@ -31,17 +31,23 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { fetchOrders, updateOrderStatusAsync } from '../../store/slices/orderSlice';
+import { fetchRiders } from '../../store/slices/riderSlice';
 
 const Orders = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { orders, loading, error } = useSelector((state) => state.orders);
+  const { riders, loading: ridersLoading, error: ridersError } = useSelector((state) => state.riders);
   const [open, setOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [status, setStatus] = useState('');
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false);
+  const [selectedOrderForAssignment, setSelectedOrderForAssignment] = useState(null);
+  const [selectedRiderId, setSelectedRiderId] = useState('');
 
   useEffect(() => {
     dispatch(fetchOrders());
+    dispatch(fetchRiders());
   }, [dispatch]);
 
   const handleOpen = (order) => {
@@ -69,6 +75,32 @@ const Orders = () => {
     }
   };
 
+  const handleOpenAssignDialog = (order) => {
+    setSelectedOrderForAssignment(order);
+    setAssignDialogOpen(true);
+  };
+
+  const handleCloseAssignDialog = () => {
+    setAssignDialogOpen(false);
+    setSelectedOrderForAssignment(null);
+    setSelectedRiderId('');
+  };
+
+  const handleRiderSelectChange = (event) => {
+    setSelectedRiderId(event.target.value);
+  };
+
+  const handleAssignRider = async () => {
+    if (selectedOrderForAssignment && selectedRiderId) {
+      await dispatch(updateOrderStatusAsync({
+        orderId: selectedOrderForAssignment._id,
+        status: 'shipped',
+        riderId: selectedRiderId
+      })).unwrap();
+      handleCloseAssignDialog();
+    }
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'pending':
@@ -86,7 +118,7 @@ const Orders = () => {
     }
   };
 
-  if (loading) {
+  if (loading || ridersLoading) {
     return (
       <Box
         sx={{
@@ -101,17 +133,21 @@ const Orders = () => {
     );
   }
 
+  if (error || ridersError) {
+    return (
+      <Container>
+        <Alert severity="error" sx={{ mt: 4 }}>
+          {error || ridersError}
+        </Alert>
+      </Container>
+    );
+  }
+
   return (
     <Container>
       <Typography variant="h4" component="h1" gutterBottom sx={{ mt: 4 }}>
         Orders
       </Typography>
-
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
 
       <TableContainer component={Paper}>
         <Table>
@@ -122,6 +158,7 @@ const Orders = () => {
               <TableCell>Customer</TableCell>
               <TableCell>Total</TableCell>
               <TableCell>Status</TableCell>
+              <TableCell>Rider</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -141,6 +178,7 @@ const Orders = () => {
                     size="small"
                   />
                 </TableCell>
+                <TableCell>{order.rider ? order.rider.name : 'N/A'}</TableCell>
                 <TableCell>
                   <IconButton
                     color="primary"
@@ -154,6 +192,16 @@ const Orders = () => {
                   >
                     <EditIcon />
                   </IconButton>
+                  {order.status !== 'delivered' && order.status !== 'cancelled' && !order.rider && (
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => handleOpenAssignDialog(order)}
+                      disabled={riders.length === 0}
+                    >
+                      Assign Rider
+                    </Button>
+                  )}
                 </TableCell>
               </TableRow>
             ))}
@@ -190,6 +238,33 @@ const Orders = () => {
             disabled={status === selectedOrder?.status}
           >
             Update
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={assignDialogOpen} onClose={handleCloseAssignDialog}>
+        <DialogTitle>Assign Rider to Order #{selectedOrderForAssignment?._id}</DialogTitle>
+        <DialogContent>
+          <FormControl fullWidth margin="normal">
+            <InputLabel id="rider-select-label">Select Rider</InputLabel>
+            <Select
+              labelId="rider-select-label"
+              value={selectedRiderId}
+              label="Select Rider"
+              onChange={handleRiderSelectChange}
+            >
+              {riders.map((rider) => (
+                <MenuItem key={rider._id} value={rider._id}>
+                  {rider.name} ({rider.status})
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseAssignDialog}>Cancel</Button>
+          <Button onClick={handleAssignRider} variant="contained" disabled={!selectedRiderId}>
+            Assign
           </Button>
         </DialogActions>
       </Dialog>

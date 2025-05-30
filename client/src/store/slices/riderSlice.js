@@ -73,7 +73,8 @@ const riderSlice = createSlice({
       })
       .addCase(createRider.fulfilled, (state, action) => {
         state.loading = false;
-        state.riders.push(action.payload);
+        const newRider = { ...action.payload.rider, status: action.payload.rider.status || 'available' };
+        state.riders.push(newRider);
       })
       .addCase(createRider.rejected, (state, action) => {
         state.loading = false;
@@ -84,10 +85,9 @@ const riderSlice = createSlice({
       })
       .addCase(updateRider.fulfilled, (state, action) => {
         state.loading = false;
-        const index = state.riders.findIndex(rider => rider._id === action.payload._id);
-        if (index !== -1) {
-          state.riders[index] = action.payload;
-        }
+        state.riders = state.riders.map(rider => 
+          rider._id === action.payload._id ? action.payload : rider
+        );
       })
       .addCase(updateRider.rejected, (state, action) => {
         state.loading = false;

@@ -301,16 +301,30 @@ const Cart = () => {
                 ${total.toFixed(2)}
               </Typography>
             </Box>
-            <Button
-              variant="contained"
-              color="primary"
-              fullWidth
-              size="large"
-              onClick={handleCheckout}
-              disabled={items.length === 0}
-            >
-              Proceed to Checkout
-            </Button>
+            <Box sx={{ mt: 3, textAlign: 'right' }}>
+              <Typography variant="h6" gutterBottom>
+                Subtotal: ${total.toFixed(2)}
+              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 2 }}>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  size="large"
+                  onClick={() => navigate('/')}
+                >
+                  Continue Shopping
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="large"
+                  onClick={handleCheckout}
+                  disabled={items.length === 0}
+                >
+                  Checkout
+                </Button>
+              </Box>
+            </Box>
           </Paper>
         </Grid>
       </Grid>

@@ -31,7 +31,17 @@ export const authAPI = {
   login: (credentials) => api.post('/auth/login', credentials),
   signup: (userData) => api.post('/auth/signup', userData),
   adminLogin: (credentials) => api.post('/auth/admin/login', credentials),
-  riderLogin: (credentials) => api.post('/auth/rider/login', credentials),
+  riderLogin: async (credentials) => {
+    try {
+      console.log('Making rider login request to:', `${API_URL}/rider/login`);
+      const response = await api.post('/rider/login', credentials);
+      console.log('Rider login response:', response);
+      return response;
+    } catch (error) {
+      console.error('Rider login request failed:', error.response || error);
+      throw error;
+    }
+  },
 };
 
 // Products API
@@ -68,6 +78,7 @@ export const ridersAPI = {
   create: (data) => api.post('/rider/create', data),
   updateStatus: (data) => api.put('/rider/status', data),
   updateLocation: (data) => api.put('/rider/location', data),
+  update: (id, data) => api.put(`/rider/${id}`, data),
 };
 
 export default api; 

@@ -10,24 +10,27 @@ import {
   Badge,
   Box,
   Container,
+  TextField,
 } from '@mui/material';
-import { ShoppingCart, Person } from '@mui/icons-material';
-import { logout } from '../store/slices/authSlice';
+import { ShoppingCart, Person, Search as SearchIcon } from '@mui/icons-material';
+import { clearAuth } from '../store/slices/authSlice';
+import { setSearchTerm } from '../store/slices/productSlice';
 
 const MainLayout = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { isAuthenticated, user } = useSelector((state) => state.auth);
+  const { isAuthenticated } = useSelector((state) => state.auth);
   const { items } = useSelector((state) => state.cart);
+  const { searchTerm } = useSelector((state) => state.products);
 
   const handleLogout = () => {
-    dispatch(logout());
+    dispatch(clearAuth());
     navigate('/login');
   };
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <AppBar position="static">
+      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
         <Toolbar>
           <Typography
             variant="h6"
@@ -37,6 +40,45 @@ const MainLayout = () => {
           >
             Zuvees
           </Typography>
+
+          <Box
+            sx={{
+              flexGrow: 1,
+              display: 'flex',
+              justifyContent: 'center',
+              mx: 2,
+            }}
+          >
+            <TextField
+              variant="outlined"
+              placeholder="Search products..."
+              value={searchTerm}
+              onChange={(e) => dispatch(setSearchTerm(e.target.value))}
+              size="small"
+              sx={{
+                width: '350px',
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '25px',
+                  paddingLeft: '10px',
+                  border: '1px solid',
+                  borderColor: '#ccc',
+                  backgroundColor: 'white',
+                  '&:hover .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#ccc',
+                  },
+                  '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                    borderColor: '#ccc',
+                  },
+                },
+                '& .MuiOutlinedInput-notchedOutline': {
+                  border: 'none',
+                },
+              }}
+              InputProps={{
+                startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />,
+              }}
+            />
+          </Box>
 
           {isAuthenticated ? (
             <>
@@ -73,7 +115,7 @@ const MainLayout = () => {
         </Toolbar>
       </AppBar>
 
-      <Container component="main" sx={{ flexGrow: 1, py: 4 }}>
+      <Container component="main" sx={{ flexGrow: 1, py: 4, mt: 8 }}>
         <Outlet />
       </Container>
 
@@ -90,8 +132,11 @@ const MainLayout = () => {
         }}
       >
         <Container maxWidth="sm">
+        <Typography variant="body1" align="center">
+            Have a Nice Shopping
+          </Typography>
           <Typography variant="body1" align="center">
-            © 2024 Zuvees. All rights reserved.
+            © 2025 Zuvees. All rights reserved.
           </Typography>
         </Container>
       </Box>

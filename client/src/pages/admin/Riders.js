@@ -41,6 +41,7 @@ const initialRiderState = {
   vehicleNumber: '',
   vehicleType: '',
   status: 'available',
+  password: '',
 };
 
 const Riders = () => {
@@ -82,7 +83,7 @@ const Riders = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isEditing) {
-      await dispatch(updateRider(currentRider));
+      await dispatch(updateRider({ id: currentRider._id, riderData: currentRider }));
     } else {
       await dispatch(createRider(currentRider));
     }
@@ -152,8 +153,8 @@ const Riders = () => {
               <TableCell>Name</TableCell>
               <TableCell>Email</TableCell>
               <TableCell>Phone</TableCell>
-              <TableCell>Vehicle</TableCell>
               <TableCell>Status</TableCell>
+              <TableCell>Created At</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -164,15 +165,13 @@ const Riders = () => {
                 <TableCell>{rider.email}</TableCell>
                 <TableCell>{rider.phone}</TableCell>
                 <TableCell>
-                  {rider.vehicleType} - {rider.vehicleNumber}
-                </TableCell>
-                <TableCell>
                   <Chip
                     label={rider.status.toUpperCase()}
                     color={getStatusColor(rider.status)}
                     size="small"
                   />
                 </TableCell>
+                <TableCell>{new Date(rider.created_at).toLocaleString()}</TableCell>
                 <TableCell>
                   <IconButton
                     color="primary"
@@ -244,6 +243,16 @@ const Riders = () => {
               onChange={handleChange}
               margin="normal"
               required
+            />
+            <TextField
+              fullWidth
+              label="Password"
+              name="password"
+              type="password"
+              value={currentRider.password}
+              onChange={handleChange}
+              margin="normal"
+              required={!isEditing}
             />
           </Box>
         </DialogContent>

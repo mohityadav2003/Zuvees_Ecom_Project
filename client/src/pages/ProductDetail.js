@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Container,
@@ -23,29 +23,25 @@ import { addItemToCart } from '../store/slices/cartSlice';
 
 const ProductDetail = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { selectedProduct: product, loading, error } = useSelector((state) => state.products);
+  const { currentProduct: product, loading, error } = useSelector((state) => state.products);
   const [selectedColor, setSelectedColor] = useState('');
   const [selectedSize, setSelectedSize] = useState('');
   const [quantity, setQuantity] = useState(1);
-  const [availableSizes, setAvailableSizes] = useState([]);
+
+  const availableColors = [...new Set(product?.variations?.map(v => v.color) || [])];
+  const availableSizes = [...new Set(product?.variations?.map(v => v.size) || [])];
 
   useEffect(() => {
     dispatch(fetchProductById(id));
   }, [dispatch, id]);
 
   useEffect(() => {
-    if (product?.variations && selectedColor) {
-      const sizes = product.variations
-        .filter(v => v.color === selectedColor)
-        .map(v => v.size);
-      setAvailableSizes(sizes);
-      if (!sizes.includes(selectedSize)) {
-        setSelectedSize('');
-      }
+    if (product?.variations?.length > 0) {
+      setSelectedColor(product.variations[0].color);
+      setSelectedSize(product.variations[0].size);
     }
-  }, [product, selectedColor]);
+  }, [product, selectedSize]);
 
   const handleQuantityChange = (e) => {
     const value = parseInt(e.target.value);
@@ -56,16 +52,15 @@ const ProductDetail = () => {
 
   const handleAddToCart = () => {
     if (!selectedColor || !selectedSize) {
-      alert('Please select color and size.');
+      alert('Please select color and size');
       return;
     }
     dispatch(addItemToCart({
       itemId: product._id,
-      quantity,
       color: selectedColor,
-      size: selectedSize
+      size: selectedSize,
+      quantity
     }));
-    navigate('/cart');
   };
 
   if (loading) {
@@ -102,10 +97,6 @@ const ProductDetail = () => {
       </Container>
     );
   }
-
-  const selectedVariant = product.variations?.find(
-    v => v.color === selectedColor && v.size === selectedSize
-  );
 
   return (
     <Container>
@@ -159,7 +150,7 @@ const ProductDetail = () => {
                   onChange={(e) => setSelectedColor(e.target.value)}
                   label="Color"
                 >
-                  {[...new Set(product.variations?.map(v => v.color))].map((color) => (
+                  {availableColors.map((color) => (
                     <MenuItem key={color} value={color}>
                       {color}
                     </MenuItem>
@@ -175,9 +166,7 @@ const ProductDetail = () => {
                   label="Size"
                   disabled={!selectedColor}
                 >
-                  {[...new Set(product.variations
-                    ?.filter((v) => v.color === selectedColor)
-                    .map(v => v.size))].map((size) => (
+                  {availableSizes.map((size) => (
                     <MenuItem key={size} value={size}>
                       {size}
                     </MenuItem>

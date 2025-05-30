@@ -5,7 +5,6 @@ const User = require('../models/user');
 
 exports.signup = async (req, res) => {
     try {
-        console.log(req.body);
         const { email, password, name } = req.body;
 
         const existingUser = await User.findOne({ email });
@@ -113,8 +112,8 @@ exports.login = async (req, res) => {
         console.error('Login error:', err);
         return res.status(500).json({
             message: "Internal Server Error"
-        });
-    }
+            });
+        }
 };
 
 exports.adminLogin = async (req, res) => {
@@ -137,40 +136,6 @@ exports.adminLogin = async (req, res) => {
             { expiresIn: '1d' }
         );
         res.status(200).json({
-            token,
-            user: {
-                id: user._id,
-                name: user.name,
-                email: user.email,
-                role: user.role
-            }
-        });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error' });
-    }
-};
-
-exports.riderLogin = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const user = await User.findOne({ email, role: 'rider' });
-
-        if (!user) {
-            return res.status(401).json({ message: 'Invalid credentials' });
-        }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ message: 'Invalid credentials' });
-        }
-
-        const token = jwt.sign(
-            { id: user._id, role: user.role },
-            process.env.JWT_SECRET,
-            { expiresIn: '1d' }
-        );
-
-        res.json({
             token,
             user: {
                 id: user._id,

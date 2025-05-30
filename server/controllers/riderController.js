@@ -1,4 +1,5 @@
 const Rider = require('../models/rider');
+const User = require('../models/user');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
@@ -69,22 +70,22 @@ exports.login = async (req, res) => {
         // Generate token
         const token = jwt.sign(
             { 
-                riderId: rider._id,
+                id: rider._id,
                 email: rider.email,
                 role: 'rider'
             },
-            process.env.JWTSECRET,
+            process.env.JWT_SECRET,
             { expiresIn: '1d' }
         );
 
         return res.status(200).json({
             message: "Login successful",
             token,
-            rider: {
+            user: {
                 id: rider._id,
                 name: rider.name,
                 email: rider.email,
-                phone: rider.phone
+                role: 'rider'
             }
         });
     } catch (err) {
@@ -168,5 +169,38 @@ exports.updateLocation = async (req, res) => {
         return res.status(500).json({
             message: "Internal server error"
         });
+    }
+};
+
+// Update rider details (admin only)
+exports.updateRider = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updateData = req.body;
+
+        // If a new password is provided, hash it
+        if (updateData.password) {
+            try {
+                updateData.password = await bcrypt.hash(updateData.password, 10);
+            } catch (hashError) {
+                console.error('Error hashing password:', hashError);
+                return res.status(500).json({ message: "Error hashing password" });
+            }
+        }
+
+        const updatedRider = await Rider.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
+
+        if (!updatedRider) {
+            return res.status(404).json({ message: "Rider not found" });
+        }
+
+        // Exclude password from the response
+        updatedRider.password = undefined;
+
+        res.status(200).json({ message: "Rider updated successfully", rider: updatedRider });
+
+    } catch (error) {
+        console.error('Update rider error:', error);
+        res.status(500).json({ message: "Error updating rider", error: error.message });
     }
 }; 
